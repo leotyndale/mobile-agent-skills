@@ -1,0 +1,35 @@
+name: Validate Skills & Installer
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate SKILL.md specs & links
+        run: python3 scripts/validate_skills.py
+
+      - name: Verify installer script
+        run: |
+          chmod +x scripts/install.sh
+          bash scripts/install.sh --list
+          TMP_DIR="$(mktemp -d)"
+          bash scripts/install.sh --target all --dest "$TMP_DIR"
+          test -f "$TMP_DIR/.claude/skills/android-compose-architect/SKILL.md"
+          test -f "$TMP_DIR/.cursor/rules/android-compose-architect.mdc"
+          test -f "$TMP_DIR/.agents/skills/android-compose-architect/SKILL.md"
+          test -f "$TMP_DIR/.agent/skills/android-compose-architect/SKILL.md"
+          test -f "$TMP_DIR/.gemini/skills/android-compose-architect/SKILL.md"
+          rm -rf "$TMP_DIR"
